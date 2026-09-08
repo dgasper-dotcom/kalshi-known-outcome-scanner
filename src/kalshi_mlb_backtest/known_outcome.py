@@ -2099,6 +2099,11 @@ def _weighted_average(rows: list[dict[str, Any]], value_field: str, weight_field
     return sum((parse_float(row.get(value_field)) or 0.0) * (parse_float(row.get(weight_field)) or 0.0) for row in rows) / total_weight
 
 
+def _known_outcome_trade_won(row: dict[str, Any]) -> bool:
+    value = parse_float(row.get("settlement_value"))
+    return value is None or value >= 1.0
+
+
 def _known_outcome_pnl_rows(trades: list[dict[str, Any]]) -> list[dict[str, Any]]:
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for row in trades:
@@ -2107,6 +2112,7 @@ def _known_outcome_pnl_rows(trades: list[dict[str, Any]]) -> list[dict[str, Any]
 
     def summary(bucket: str, rows: list[dict[str, Any]], market_family: str = "ALL", known_side: str = "ALL") -> dict[str, Any]:
         filled = _sum_float(rows, "filled_contracts")
+        wins = sum(1 for row in rows if _known_outcome_trade_won(row))
         return {
             "model_name": "known_outcome_carry_apy",
             "bucket": bucket,
@@ -2122,8 +2128,8 @@ def _known_outcome_pnl_rows(trades: list[dict[str, Any]]) -> list[dict[str, Any]
             "apy_adjusted_pnl_total": _sum_float(rows, "apy_adjusted_realized_pnl_total"),
             "avg_apy_adjusted_pnl_per_contract": (_sum_float(rows, "apy_adjusted_realized_pnl_total") / filled) if filled > 0 else None,
             "avg_breakeven_verifier_accuracy": _weighted_average(rows, "breakeven_verifier_accuracy", "filled_contracts"),
-            "wins_by_verifier": len(rows),
-            "losses_by_verifier": 0,
+            "wins_by_verifier": wins,
+            "losses_by_verifier": len(rows) - wins,
             "last_entry_timestamp_utc": max((str(row.get("scan_timestamp_utc") or "") for row in rows), default=""),
         }
 
