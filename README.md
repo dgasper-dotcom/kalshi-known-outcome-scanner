@@ -63,6 +63,48 @@ Environment overrides:
 CONTRACTS=100 POLL_SECONDS=90 ./known_outcome_loop.sh
 ```
 
+## Run Scanner + Dashboard On a Home Computer
+
+Install `screen` if it is not already available, then run:
+
+```bash
+./start_home_dashboard.sh
+```
+
+This starts two detached sessions:
+
+- `kalshi_known_outcome_loop`: scans every 90 seconds with `CONTRACTS=100`
+- `kalshi_dashboard`: serves the dashboard on `http://localhost:8766`
+
+To check the sessions:
+
+```bash
+screen -ls
+tail -f known_outcome_loop.log
+tail -f dashboard.log
+```
+
+To stop them:
+
+```bash
+screen -S kalshi_known_outcome_loop -X quit
+screen -S kalshi_dashboard -X quit
+```
+
+To view the dashboard from another device on your home network, start it with:
+
+```bash
+HOST=0.0.0.0 ./start_home_dashboard.sh
+```
+
+Then open `http://HOME_COMPUTER_LOCAL_IP:8766`.
+
+For access while away from home, use a private tunnel such as Tailscale and open:
+
+```text
+http://HOME_COMPUTER_TAILSCALE_IP:8766
+```
+
 ## Outputs
 
 Runtime files are intentionally ignored by git.
