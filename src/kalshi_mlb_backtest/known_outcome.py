@@ -876,7 +876,49 @@ def _code(value: str | None) -> str:
 
 
 def _selected_team_code(ticker: str) -> str:
-    return _code(ticker.rsplit("-", 1)[-1] if "-" in ticker else "")
+    suffix = ticker.rsplit("-", 1)[-1] if "-" in ticker else ""
+    return _code(re.sub(r"\d+(?:\.\d+)?$", "", suffix))
+
+
+def _event_matchup_code(event_ticker: str) -> str:
+    match = re.search(r"-\d{2}[A-Z]{3}\d{2}(?:\d{4})?(?P<code>[A-Z0-9]+)$", event_ticker.upper())
+    return _code(match.group("code")) if match else ""
+
+
+def _team_token_matches(segment: str, team: "TeamGameTeam") -> bool:
+    segment = _code(segment)
+    if not segment:
+        return False
+    codes = _team_codes(team)
+    if segment in codes:
+        return True
+    keys = {key.replace(" ", "").upper() for key in _team_name_keys(team) if key}
+    if segment in keys:
+        return True
+    if len(segment) >= 3 and any(key.startswith(segment) for key in keys if len(key) >= len(segment)):
+        return True
+    if segment == "AZ" and "ARI" in codes:
+        return True
+    if segment == "CHAR" and any(key.startswith("CHARLOTTE") for key in keys):
+        return True
+    return False
+
+
+def _game_matches_event_ticker(event_ticker: str, game: "TeamGameResult") -> bool:
+    matchup_code = _event_matchup_code(event_ticker)
+    teams = list(game.teams)
+    if not matchup_code or len(teams) != 2:
+        return True
+    away = next((team for team in teams if team.home_away.lower() == "away"), teams[0])
+    home = next((team for team in teams if team.home_away.lower() == "home"), teams[1])
+    for split in range(2, len(matchup_code) - 1):
+        first = matchup_code[:split]
+        second = matchup_code[split:]
+        if _team_token_matches(first, away) and _team_token_matches(second, home):
+            return True
+        if _team_token_matches(first, home) and _team_token_matches(second, away):
+            return True
+    return False
 
 
 def _team_name_keys(team: TeamGameTeam) -> set[str]:
@@ -1425,6 +1467,8 @@ def _match_team_game_result(market: TeamGameMarket, games: list[TeamGameResult])
     for game in games:
         if not game.completed or len(game.teams) != 2 or _winner_team(game) is None:
             continue
+        if not _game_matches_event_ticker(market.event_ticker, game):
+            continue
         best_team: TeamGameTeam | None = None
         best_strength = 0
         for team in game.teams:
@@ -1520,19 +1564,22 @@ def _match_score_game_result(
     games: list[TeamGameResult],
 ) -> tuple[TeamGameResult, TeamGameTeam | None] | None:
     selected_code = _selected_team_code(market.ticker)
+    has_matchup_code = bool(_event_matchup_code(market.event_ticker))
     text = _market_text(market.raw_market)
     candidates: list[tuple[float, TeamGameResult, TeamGameTeam | None]] = []
     for game in games:
         if not game.completed or len(game.teams) != 2 or any(team.score is None for team in game.teams):
+            continue
+        if not _game_matches_event_ticker(market.event_ticker, game):
             continue
         mentioned = sum(1 for team in game.teams if _team_mentioned_in_market_text(team, text))
         time_delta_hours = 999.0
         if market.occurrence_ts is not None and game.game_date_utc is not None:
             time_delta_hours = abs(market.occurrence_ts - game.game_date_utc) / 3600.0
         if market.market_type == "game_total":
-            if mentioned < 2:
+            if mentioned < 2 and not has_matchup_code:
                 continue
-            score = float(mentioned * 10) - min(time_delta_hours, 96.0) / 10.0
+            score = float(max(mentioned, 2) * 10) - min(time_delta_hours, 96.0) / 10.0
             candidates.append((score, game, None))
             continue
 
