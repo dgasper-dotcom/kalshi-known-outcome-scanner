@@ -65,10 +65,10 @@ CONTRACTS=100 POLL_SECONDS=90 ./known_outcome_loop.sh
 
 ## Run Scanner + Dashboard On a Home Computer
 
-On Windows PowerShell, run:
+On Windows, run:
 
 ```powershell
-.\start_home_dashboard.ps1
+.\start_home_dashboard.bat
 ```
 
 If Kalshi returns `429 Too Many Requests`, wait 5-10 minutes, then restart with a slower/light scan:

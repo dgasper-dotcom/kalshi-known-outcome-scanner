@@ -4,7 +4,7 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $DashboardHost = if ($env:HOST) { $env:HOST } else { "127.0.0.1" }
 $Port = if ($env:PORT) { [int]$env:PORT } else { 8766 }
 $env:CONTRACTS = if ($env:CONTRACTS) { $env:CONTRACTS } else { "100" }
-$env:POLL_SECONDS = if ($env:POLL_SECONDS) { $env:POLL_SECONDS } else { "300" }
+$env:POLL_SECONDS = if ($env:POLL_SECONDS) { $env:POLL_SECONDS } else { "600" }
 $env:ORDERBOOK_WORKERS = if ($env:ORDERBOOK_WORKERS) { $env:ORDERBOOK_WORKERS } else { "1" }
 $Python = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not (Test-Path $Python)) {

@@ -3,7 +3,7 @@ param()
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Out = if ($env:OUT) { $env:OUT } else { $Root }
 $DurationMinutes = if ($env:DURATION_MINUTES) { [int]$env:DURATION_MINUTES } else { 20160 }
-$PollSeconds = if ($env:POLL_SECONDS) { [int]$env:POLL_SECONDS } else { 300 }
+$PollSeconds = if ($env:POLL_SECONDS) { [int]$env:POLL_SECONDS } else { 600 }
 $OrderbookWorkers = if ($env:ORDERBOOK_WORKERS) { [int]$env:ORDERBOOK_WORKERS } else { 1 }
 $Contracts = if ($env:CONTRACTS) { [double]$env:CONTRACTS } else { 100 }
 $MinContracts = if ($env:MIN_CONTRACTS) { [double]$env:MIN_CONTRACTS } else { 1 }
