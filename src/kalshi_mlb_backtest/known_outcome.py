@@ -1347,7 +1347,7 @@ def _discover_markets(
 
 def _kalshi_connection_issue(exc: Exception) -> bool:
     message = str(exc).lower()
-    return "ssl" in message or "handshake" in message
+    return "ssl" in message or "handshake" in message or "429" in message or "too many requests" in message
 
 
 def _fee_info_by_series(kalshi: KalshiClient, series_ticker: str) -> dict[str, tuple[str | None, float | None]]:

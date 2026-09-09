@@ -65,6 +65,26 @@ CONTRACTS=100 POLL_SECONDS=90 ./known_outcome_loop.sh
 
 ## Run Scanner + Dashboard On a Home Computer
 
+On Windows PowerShell, run:
+
+```powershell
+.\start_home_dashboard.ps1
+```
+
+If Kalshi returns `429 Too Many Requests`, wait 5-10 minutes, then restart with a slower/light scan:
+
+```powershell
+$env:POLL_SECONDS="600"
+$env:ORDERBOOK_WORKERS="1"
+$env:MAX_MARKET_PAGES="1"
+$env:KNOWN_OUTCOME_SERIES_TICKER="KXMLBHIT,KXMLBHR,KXTEMPNYCH,KXTEMPCHIH,KXTEMPDCH,KXTEMPLAXH,KXTEMPMIAH,KXTEMPAUSH,KXHIGHNY,KXHIGHCHI,KXHIGHDEN,KXHIGHLAX,KXHIGHMIA,KXHIGHPHIL,KXHIGHAUS"
+.\start_home_dashboard.ps1
+```
+
+That scans MLB player props and weather first, with one market page per series and one orderbook worker. After it runs cleanly, remove `MAX_MARKET_PAGES` and broaden `KNOWN_OUTCOME_SERIES_TICKER`.
+
+On macOS/Linux:
+
 Install `screen` if it is not already available, then run:
 
 ```bash

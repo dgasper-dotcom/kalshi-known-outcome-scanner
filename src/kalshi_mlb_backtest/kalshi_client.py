@@ -103,7 +103,13 @@ class KalshiClient:
             try:
                 resp = self.session.get(url, params=clean_params, headers=headers, timeout=self.timeout)
                 if resp.status_code in {429, 500, 502, 503, 504} and attempt < self.max_retries:
-                    time.sleep(self.retry_sleep * (2**attempt))
+                    retry_after = None
+                    if resp.status_code == 429:
+                        try:
+                            retry_after = float(resp.headers.get("Retry-After") or "")
+                        except ValueError:
+                            retry_after = None
+                    time.sleep(retry_after if retry_after is not None and retry_after > 0 else self.retry_sleep * (2**attempt))
                     continue
                 if resp.status_code >= 400:
                     raise KalshiApiError(f"Kalshi HTTP {resp.status_code} {resp.url}: {resp.text[:500]}")
